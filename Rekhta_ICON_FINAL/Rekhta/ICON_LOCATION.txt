@@ -1,0 +1,4 @@
+ICON LOCATION
+
+app/src/main/res/drawable/icon.png
+This project also contains the launcher icon resources under res/mipmap-*.

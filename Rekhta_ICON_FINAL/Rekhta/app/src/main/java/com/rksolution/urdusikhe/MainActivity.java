@@ -19,7 +19,6 @@ import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.RequestConfiguration;
-import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
@@ -27,9 +26,11 @@ import java.util.Locale;
 
 public class MainActivity extends Activity {
 
+    // LIVE Rewarded Ad Unit ID
     private static final String LIVE_REWARDED_AD_UNIT_ID =
             "ca-app-pub-3822431624321367/6028340340";
 
+    // Google TEST Rewarded Ad Unit ID
     private static final String TEST_REWARDED_AD_UNIT_ID =
             "ca-app-pub-3940256099942544/5224354917";
 
@@ -40,96 +41,159 @@ public class MainActivity extends Activity {
     private RewardedAd rewardedAd;
     private boolean isLoadingRewardedAd = false;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+
         setContentView(R.layout.activity_main);
 
+        // Urdu Voice
         initTextToSpeech();
 
+        // WebView
         webView = findViewById(R.id.webView);
 
         WebSettings settings = webView.getSettings();
+
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
+
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
+
         settings.setMediaPlaybackRequiresUserGesture(true);
+
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setSupportMultipleWindows(false);
+
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
+
         settings.setLoadsImagesAutomatically(true);
+
         settings.setMixedContentMode(
                 WebSettings.MIXED_CONTENT_NEVER_ALLOW
         );
 
-        webView.addJavascriptInterface(new AndroidVoice(), "AndroidVoice");
-        webView.addJavascriptInterface(new AndroidAds(), "AndroidAds");
+        // JavaScript Bridge
+        webView.addJavascriptInterface(
+                new AndroidVoice(),
+                "AndroidVoice"
+        );
+
+        webView.addJavascriptInterface(
+                new AndroidAds(),
+                "AndroidAds"
+        );
 
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
-        webView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
 
-        webView.loadUrl("file:///android_asset/index.html");
+        webView.setOverScrollMode(
+                WebView.OVER_SCROLL_NEVER
+        );
 
+        // Load Game
+        webView.loadUrl(
+                "file:///android_asset/index.html"
+        );
+
+        // Start AdMob
         initializeAds();
     }
+
+
+    // =========================================================
+    // ADMOB INITIALIZATION
+    // =========================================================
 
     private void initializeAds() {
 
         RequestConfiguration requestConfiguration =
                 new RequestConfiguration.Builder()
+
                         .setTagForChildDirectedTreatment(
-                                RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE
+                                RequestConfiguration
+                                        .TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE
                         )
+
                         .setMaxAdContentRating(
-                                RequestConfiguration.MAX_AD_CONTENT_RATING_G
+                                RequestConfiguration
+                                        .MAX_AD_CONTENT_RATING_G
                         )
+
                         .build();
 
-        MobileAds.setRequestConfiguration(requestConfiguration);
+        MobileAds.setRequestConfiguration(
+                requestConfiguration
+        );
 
-        MobileAds.initialize(this, initializationStatus -> {
-            Log.d("URDU_SIKHE_ADS", "AdMob initialized");
-            loadRewardedAd();
-        });
+        MobileAds.initialize(
+                this,
+                initializationStatus -> {
+
+                    Log.d(
+                            "URDU_SIKHE_ADS",
+                            "AdMob initialized"
+                    );
+
+                    loadRewardedAd();
+                }
+        );
     }
+
+
+    // =========================================================
+    // LOAD REWARDED VIDEO
+    // =========================================================
 
     private void loadRewardedAd() {
 
-        if (isLoadingRewardedAd || rewardedAd != null) {
+        if (isLoadingRewardedAd) {
+            return;
+        }
+
+        if (rewardedAd != null) {
             return;
         }
 
         isLoadingRewardedAd = true;
 
-        AdRequest adRequest = new AdRequest.Builder().build();
+        AdRequest adRequest =
+                new AdRequest.Builder().build();
 
         /*
-         * DEVELOPMENT / TESTING:
-         * Test ad unit is used here.
+         * TESTING MODE
          *
-         * Before publishing the final release, change this to:
+         * अभी Google TEST ID इस्तेमाल हो रही है।
          *
-         * LIVE_REWARDED_AD_UNIT_ID
+         * बाद में LIVE करने के लिए:
+         *
+         * String adUnitId = LIVE_REWARDED_AD_UNIT_ID;
          */
 
-        String adUnitId = TEST_REWARDED_AD_UNIT_ID;
+        String adUnitId =
+                TEST_REWARDED_AD_UNIT_ID;
+
 
         RewardedAd.load(
                 this,
                 adUnitId,
                 adRequest,
+
                 new RewardedAdLoadCallback() {
 
                     @Override
-                    public void onAdLoaded(RewardedAd ad) {
+                    public void onAdLoaded(
+                            RewardedAd ad
+                    ) {
 
                         isLoadingRewardedAd = false;
+
                         rewardedAd = ad;
 
                         Log.d(
@@ -140,10 +204,14 @@ public class MainActivity extends Activity {
                         setRewardedAdCallbacks(ad);
                     }
 
+
                     @Override
-                    public void onAdFailedToLoad(LoadAdError loadAdError) {
+                    public void onAdFailedToLoad(
+                            LoadAdError loadAdError
+                    ) {
 
                         isLoadingRewardedAd = false;
+
                         rewardedAd = null;
 
                         Log.e(
@@ -156,7 +224,14 @@ public class MainActivity extends Activity {
         );
     }
 
-    private void setRewardedAdCallbacks(RewardedAd ad) {
+
+    // =========================================================
+    // REWARDED AD CALLBACKS
+    // =========================================================
+
+    private void setRewardedAdCallbacks(
+            RewardedAd ad
+    ) {
 
         ad.setFullScreenContentCallback(
                 new FullScreenContentCallback() {
@@ -170,6 +245,7 @@ public class MainActivity extends Activity {
                         );
                     }
 
+
                     @Override
                     public void onAdDismissedFullScreenContent() {
 
@@ -180,8 +256,10 @@ public class MainActivity extends Activity {
 
                         rewardedAd = null;
 
+                        // Load next ad
                         loadRewardedAd();
                     }
+
 
                     @Override
                     public void onAdFailedToShowFullScreenContent(
@@ -190,7 +268,7 @@ public class MainActivity extends Activity {
 
                         Log.e(
                                 "URDU_SIKHE_ADS",
-                                "Rewarded ad failed to show: "
+                                "Ad failed to show: "
                                         + adError.getMessage()
                         );
 
@@ -201,6 +279,11 @@ public class MainActivity extends Activity {
                 }
         );
     }
+
+
+    // =========================================================
+    // SHOW REWARDED VIDEO
+    // =========================================================
 
     private void showRewardedAd() {
 
@@ -213,15 +296,20 @@ public class MainActivity extends Activity {
             ).show();
 
             loadRewardedAd();
+
             return;
         }
 
-        RewardedAd adToShow = rewardedAd;
+
+        RewardedAd adToShow =
+                rewardedAd;
 
         rewardedAd = null;
 
+
         adToShow.show(
                 this,
+
                 rewardItem -> {
 
                     Log.d(
@@ -237,6 +325,11 @@ public class MainActivity extends Activity {
         );
     }
 
+
+    // =========================================================
+    // GIVE GAME REWARD
+    // =========================================================
+
     private void giveGameReward() {
 
         if (webView == null) {
@@ -246,11 +339,14 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> {
 
             webView.evaluateJavascript(
+
                     "if(window.onRewardedAdEarned){" +
                             "window.onRewardedAdEarned();" +
                             "}",
+
                     null
             );
+
 
             Toast.makeText(
                     this,
@@ -260,40 +356,76 @@ public class MainActivity extends Activity {
         });
     }
 
+
+    // =========================================================
+    // URDU TEXT TO SPEECH
+    // =========================================================
+
     private void initTextToSpeech() {
 
         tts = new TextToSpeech(
                 this,
+
                 status -> {
 
                     if (status == TextToSpeech.SUCCESS) {
 
                         int result =
                                 tts.setLanguage(
-                                        new Locale("ur", "PK")
+                                        new Locale(
+                                                "ur",
+                                                "PK"
+                                        )
                                 );
 
-                        if (result == TextToSpeech.LANG_MISSING_DATA
-                                || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+
+                        if (
+                                result ==
+                                        TextToSpeech.LANG_MISSING_DATA
+                                        ||
+                                result ==
+                                        TextToSpeech.LANG_NOT_SUPPORTED
+                        ) {
 
                             result =
                                     tts.setLanguage(
-                                            new Locale("ur", "IN")
+                                            new Locale(
+                                                    "ur",
+                                                    "IN"
+                                            )
                                     );
                         }
 
-                        if (result == TextToSpeech.LANG_MISSING_DATA
-                                || result == TextToSpeech.LANG_NOT_SUPPORTED) {
 
+                        if (
+                                result ==
+                                        TextToSpeech.LANG_MISSING_DATA
+                                        ||
+                                result ==
+                                        TextToSpeech.LANG_NOT_SUPPORTED
+                        ) {
+
+                            // Hindi fallback
                             tts.setLanguage(
-                                    new Locale("hi", "IN")
+                                    new Locale(
+                                            "hi",
+                                            "IN"
+                                    )
                             );
                         }
 
-                        tts.setSpeechRate(0.72f);
-                        tts.setPitch(1.0f);
+
+                        tts.setSpeechRate(
+                                0.72f
+                        );
+
+                        tts.setPitch(
+                                1.0f
+                        );
+
 
                         tts.setOnUtteranceProgressListener(
+
                                 new UtteranceProgressListener() {
 
                                     @Override
@@ -302,11 +434,13 @@ public class MainActivity extends Activity {
                                     ) {
                                     }
 
+
                                     @Override
                                     public void onDone(
                                             String utteranceId
                                     ) {
                                     }
+
 
                                     @Override
                                     public void onError(
@@ -316,37 +450,63 @@ public class MainActivity extends Activity {
                                 }
                         );
 
+
                         ttsReady = true;
                     }
                 }
         );
     }
 
+
+    // =========================================================
+    // ANDROID VOICE BRIDGE
+    // =========================================================
+
     public class AndroidVoice {
 
         @JavascriptInterface
-        public void speak(String text) {
+        public void speak(
+                String text
+        ) {
 
-            if (text == null || text.trim().isEmpty()) {
+            if (
+                    text == null
+                            ||
+                    text.trim().isEmpty()
+            ) {
+
                 return;
             }
 
+
             runOnUiThread(() -> {
 
-                if (!ttsReady || tts == null) {
+                if (
+                        !ttsReady
+                                ||
+                        tts == null
+                ) {
+
                     return;
                 }
 
+
                 tts.stop();
 
+
                 tts.speak(
+
                         text.trim(),
+
                         TextToSpeech.QUEUE_FLUSH,
+
                         null,
+
                         "urdu_sikhe_voice"
                 );
             });
         }
+
 
         @JavascriptInterface
         public void stop() {
@@ -354,11 +514,17 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
 
                 if (tts != null) {
+
                     tts.stop();
                 }
             });
         }
     }
+
+
+    // =========================================================
+    // ANDROID ADS BRIDGE
+    // =========================================================
 
     public class AndroidAds {
 
@@ -366,38 +532,74 @@ public class MainActivity extends Activity {
         public void showRewardedAd() {
 
             runOnUiThread(() -> {
-                showRewardedAd();
+
+                MainActivity.this.showRewardedAd();
+
             });
         }
     }
 
+
+    // =========================================================
+    // BACK BUTTON
+    // =========================================================
+
     @Override
     public void onBackPressed() {
 
-        if (webView != null && webView.canGoBack()) {
+        if (
+                webView != null
+                        &&
+                webView.canGoBack()
+        ) {
+
             webView.goBack();
+
         } else {
+
             super.onBackPressed();
         }
     }
+
+
+    // =========================================================
+    // DESTROY
+    // =========================================================
 
     @Override
     protected void onDestroy() {
 
         if (tts != null) {
+
             tts.stop();
+
             tts.shutdown();
+
             tts = null;
         }
 
+
         if (webView != null) {
-            webView.loadUrl("about:blank");
+
+            webView.loadUrl(
+                    "about:blank"
+            );
+
             webView.stopLoading();
-            webView.setWebChromeClient(null);
-            webView.setWebViewClient(null);
+
+            webView.setWebChromeClient(
+                    null
+            );
+
+            webView.setWebViewClient(
+                    null
+            );
+
             webView.destroy();
+
             webView = null;
         }
+
 
         rewardedAd = null;
 
